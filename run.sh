@@ -4,7 +4,7 @@ export PATH="$HOME/.local/bin:$PATH"
 export NVM_DIR=$HOME/.nvm;
 export CALLDIR="$(pwd)"
 
-if [[ $OSTYPE == darwin* ]]; then
+if [[ $OSTYPE == darwin* && -f $NVM_DIR/nvm.sh ]]; then
   source $NVM_DIR/nvm.sh;
 fi
 
@@ -13,10 +13,8 @@ scriptdir=$( dirname -- "$0"; )
 #echo "The script you are running has basename $scriptname, dirname $scriptdir";
 #echo "The present working directory is $( pwd; )";
 
-
 cd "$scriptdir" || exit
 
-# cmd=("$HOME/.nvm/versions/node/v16.20.1/bin/npx" "elm-pages@3.0.3" "run" "Lx" "--" "$@")
 cmd=("npx" "elm-pages" "run" "./src/Lx.elm" "--" "$@")
 
 # elm-pages script currently has some of its own debugging output that we don't want, given
