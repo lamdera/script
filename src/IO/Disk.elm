@@ -63,12 +63,15 @@ write path contents =
         (E.object [ ( "path", E.string path ), ( "contents", E.string contents ) ])
         D.string
         |> BackendTask.allowFatal
-        |> debug ("✍️  " ++ path)
+
+
+
+-- |> debug ("✍️  " ++ path)
 
 
 write_ : String -> String -> IO a -> IO a
-write_ path contents previous =
-    previous |> passthrough (write path contents)
+write_ path contents =
+    passthrough (write path contents)
 
 
 append : String -> String -> IO String

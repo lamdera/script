@@ -230,20 +230,22 @@ whenExists_ path io previous =
             )
 
 
+whenMissing : String -> IO a -> IO ()
+whenMissing path io =
+    IO.Disk.doesPathExist path
+        |> BackendTask.andThen
+            (\exists_ ->
+                if exists_ then
+                    BackendTask.succeed ()
+
+                else
+                    io |> discardAndThen (BackendTask.succeed ())
+            )
+
+
 whenMissing_ : String -> IO a -> IO b -> IO b
 whenMissing_ path io previous =
-    previous
-        |> passthrough
-            (IO.Disk.doesPathExist path
-                |> BackendTask.andThen
-                    (\exists_ ->
-                        if exists_ then
-                            BackendTask.succeed ()
-
-                        else
-                            io |> discardAndThen (BackendTask.succeed ())
-                    )
-            )
+    previous |> passthrough (whenMissing path io)
 
 
 onlyWhen : Bool -> IO () -> IO ()
@@ -262,6 +264,11 @@ onlyWhenNot condition task =
 
     else
         succeed ()
+
+
+onlyWhenNot_ : Bool -> IO () -> IO b -> IO b
+onlyWhenNot_ condition task previous =
+    previous |> passthrough (onlyWhenNot condition task)
 
 
 onlyWhen_ : IO Bool -> IO () -> IO ()
@@ -306,15 +313,9 @@ endWith val previous =
     previous |> BackendTask.map (\_ -> val)
 
 
-
--- ignoreErrors : IO a -> IO ()
--- ignoreErrors previous =
---     previous |> BackendTask.map (\_ -> ()) |> BackendTask.onError (\err -> succeed ())
-
-
-ignoreErrors : a -> IO a -> IO a
-ignoreErrors default task =
-    BackendTask.onError (\_ -> BackendTask.succeed default) task
+ignoreErrors : IO a -> IO ()
+ignoreErrors previous =
+    previous |> BackendTask.map (\_ -> ()) |> BackendTask.onError (\err -> succeed ())
 
 
 isMacOS : IO Bool
@@ -522,6 +523,14 @@ die_ =
     IO.Exec.die_
 
 
+crash =
+    IO.Exec.crash
+
+
+crash_ =
+    IO.Exec.crash_
+
+
 exec =
     IO.Exec.exec
 
@@ -572,3 +581,11 @@ readEnv =
 
 getFreePort =
     IO.Custom.getFreePort
+
+
+concurrently =
+    BackendTask.combine >> BackendTask.map (\_ -> ())
+
+
+sequence =
+    BackendTask.sequence

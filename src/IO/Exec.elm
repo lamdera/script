@@ -5,6 +5,8 @@ module IO.Exec exposing
     , bashStream
     , bashStream_
     , bash_
+    , crash
+    , crash_
     , die
     , die_
     , exec
@@ -19,6 +21,7 @@ module IO.Exec exposing
 
 import BackendTask
 import BackendTask.Custom
+import IO.Log
 import IO.Util exposing (..)
 import Json.Decode as D
 import Json.Encode as E
@@ -31,6 +34,14 @@ type alias ExecResult =
 bash : String -> IO ExecResult
 bash cmd =
     exec "bash" [ "-c", "'" ++ cmd ++ "'" ]
+        |> andThen
+            (\execResult ->
+                if execResult.exitCode == 0 then
+                    succeed execResult
+
+                else
+                    fatal (execResult.out ++ execResult.err)
+            )
 
 
 bash_ : String -> IO a -> IO a
@@ -134,6 +145,17 @@ die exitCode =
 die_ : Int -> IO a -> IO ()
 die_ exitCode previous =
     previous |> andThen (\_ -> die exitCode)
+
+
+crash : String -> IO ()
+crash message =
+    IO.Log.print ("$(red)IO.Exec.crash with message:$(normal)" ++ message)
+        |> andThen (\_ -> die 1)
+
+
+crash_ : String -> IO a -> IO ()
+crash_ message previous =
+    previous |> andThen (\_ -> crash message)
 
 
 sleep : Int -> IO ()

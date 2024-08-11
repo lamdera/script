@@ -31,7 +31,7 @@ postReturnString url jsonBody =
 
 
 getFatal path expectation =
-    debugNote ("🚀  GET " ++ path)
+    debugNote ("🚀  GET (60s) " ++ path)
         |> andThen
             (\_ ->
                 BackendTask.Http.request
@@ -40,7 +40,24 @@ getFatal path expectation =
                     , headers = []
                     , body = BackendTask.Http.emptyBody
                     , retries = Just 2
-                    , timeoutInMs = Just 2000
+                    , timeoutInMs = Just (60 * 1000)
+                    }
+                    expectation
+                    |> BackendTask.allowFatal
+            )
+
+
+getFatalFast path expectation =
+    debugNote ("🚀  GET (5s) " ++ path)
+        |> andThen
+            (\_ ->
+                BackendTask.Http.request
+                    { url = path
+                    , method = "GET"
+                    , headers = []
+                    , body = BackendTask.Http.emptyBody
+                    , retries = Just 2
+                    , timeoutInMs = Just (5 * 1000)
                     }
                     expectation
                     |> BackendTask.allowFatal
